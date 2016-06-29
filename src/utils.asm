@@ -1,9 +1,11 @@
-Letter: var #1 ; Aloca espaço para uma letra (Input Purposes)
+
+
+; Prints a character
 ; r0 - Screen Position
 ; r1 - Character
 ; r2 - Color
 PrintChar:
-     push r1
+    push r1 ; Caractere
 
     add r1, r1, r2 ; Adicionando cor
     outchar r1, r0 ; Printando caractere
@@ -11,120 +13,133 @@ PrintChar:
     pop r1
 rts
 
+; Erases a character at given position
+; r0 - Screen Position
+EraseChar:
+    push r1 ; ' '
+
+    loadn r1, #' ' ; Espaço
+
+    outchar r1, r0 ; Apagando o caractere
+
+    pop r1
+rts
+
+; Prints a String
 ; r0 - Screen Position
 ; r1 - String Address
 ; r2 - Color
 ; r3 - Character to be skipped
-;PrintString:
-    
-;:
+PrintString:
+    push r0 ; Screen Position
+    push r1 ; String Address
+    push r4 ; '\0'
+    push r5 ; Caractere (auxiliar)
 
-; r0 should contain the Screen Position
-; r1 should contain the String Address
-; r2 should contain a color
-; r6 should contain the character to be skipped
-;PrintString:
-  ;  push fr
-   ; push r0
-  ;  push r1
-  ;  push r2
-  ;  push r3
-  ;  push r4
-    
-  ;  loadn r3, #'\0' ; Definindo terminador
-  ;  loadi r4, r1 ; Carregando um caractere da string para r4
+    loadn r4, #'\0' ; Terminador de String
+    loadi r5, r1 ; Carregando um caractere da String
 
-  ;  cmp r4, r3 ; Comparando com o '\0'
-  ;  jeq PrintString_EndIf1 ; if (r4 != '\0')
-  ;      PrintString_Loop: ; while (r4 != '\0')
-  ;          cmp r4, r6 ; Comparando com o caractere a ser pulado
-;
-  ;          jeq PrintString_EndIf2 ; if (r4 != skip)
-  ;              add r4, r2, r4 ; Adicionando cor ao caractere
- ;               outchar r4, r0 ; Imprimindo o caractere
- ;           PrintString_EndIf2:
-;
- ;           inc r0 ; Inc Screen Position
-;            inc r1 ; Inc String Address
-;            loadi r4, r1 ; Carregando um caractere da string para a r4
- ;           cmp r4, r3 ; Comparando com o '\0'
- ;       jne PrintString_Loop
- ;   PrintString_EndIf1:
+    cmp r5, r4 ; Comparando o caractere atual com o '\0'
+    jeq PrintString_EndIf_1 ; if (r5 != '\0')
+        PrintString_Loop: ; while (r5 != '\0')
+            cmp r5, r3 ; Comparando com o caractere a ser pulado
 
- ;   pop r4
- ;   pop r3
- ;   pop r2
- ;   pop r1
- ;   pop r0
- ;   pop fr
-;rts
+            jeq PrintString_EndIf_2 ; if (r5 != r3)
+                add r5, r5, r2 ; Adicionando cor ao caractere
+                outchar r5, r0 ; Imprimindo o caractere
+            PrintString_EndIf_2:
+
+            inc r0 ; Inc Screen Position
+            inc r1 ; Inc String Address
+
+            loadi r5, r1 ; Carregando um caractere da string para a r4
+
+            cmp r5, r4 ; Comparando com o '\0'
+        jne PrintString_Loop
+    PrintString_EndIf_1:
+
+    pop r5
+    pop r4
+    pop r1
+    pop r0
+rts
 
 ; Prints the entire Screen
-; r1 should contain last string's address
-; r2 should contain a color code
-; r6 should contain the character to be skipped
-;PrintScreen:
-  ;  push fr
-   ; push r0
-    ;push r1
-  ;  push r2
-  ;  push r3
-  ;  push r4
-  ;  push r5
-  ;  push r6
+; r1 - Last String's Address
+; r2 - Color
+; r3 - Character to be skipped
+PrintScreen:
+    push r0 ; Screen Position
+    push r1 ; String Address
+    push r4 ; Screen Position decrement
+    push r5 ; Address decrement
 
-;    loadn r0, #1200 ; Initial screen position
- ;   loadn r3, #40 ; Screen position decrement
- ;   loadn r4, #41 ; Address decrement
+    loadn r0, #1200 ; Initial Screen Position
+    loadn r4, #40 ; Screen Position decrement
+    loadn r5, #41 ; Address decrement
 
- ;   add r1, r1, r4 ; Initializing r1
+    add r1, r1, r5 ; Inicializando r1 com 41 a mais
 
- ;   PrintScreen_Loop:
- ;       sub r1, r1, r4 ; Dec Address
- ;       sub r0, r0, r3 ; Dec Screen Positon
- ;      call PrintString
- ;   jnz PrintScreen_Loop
+    PrintScreen_Loop: ; while (r0 != 0)
+        sub r1, r1, r5 ; Dec Address
+        sub r0, r0, r4 ; Dec Screen Positon
+        call PrintString ; Imprimindo a linha
+    jnz PrintScreen_Loop
 
-  ;  pop r6
- ;   pop r5
-  ;  pop r4
- ;   pop r3
- ;   pop r2
- ;   pop r1
- ;   pop r0
- ;   pop fr
-;rts
+    pop r5
+    pop r4
+    pop r1
+    pop r0
+rts
 
 ; Erases the entire Screen
 EraseScreen:
-    push fr
-    push r0
-    push r1
+    push r0 ; Screen Position
+    push r1 ; ' '
 
     loadn r0, #1200
     loadn r1, #' '
 
-    EraseScreen_Loop:
-        dec r0
-        outchar r1, r0
+    EraseScreen_Loop: ; while (r0 != 0)
+        dec r0 ; Decrementando a posição da tela
+        outchar r1, r0 ; Printando o espaço
     jnz EraseScreen_Loop
 
     pop r1
     pop r0
-    pop fr
 rts
 
+; Paints the entire Screen
+; r2 - Color
+PaintScreen:
+    push r0 ; Screen Position
+    push r1 ; ' '
+
+    loadn r0, #1200
+    loadn r1, #' '
+
+    add r1, r1, r2
+
+    PaintScreen_Loop: ; while (r0 != 0)
+        dec r0 ; Decrementando a posição da tela
+        outchar r1, r0 ; Printando o espaço
+    jnz PaintScreen_Loop
+
+    pop r1
+    pop r0
+rts
+
+; Delay de alguns milisegundos
 Delay:
-    push fr
-    push r0
-    push r1
+    push r0 ; For externo
+    push r1 ; For interno
 
-    loadn r0, #1000
+    loadn r0, #10000
 
-    Delay_Loop1:
-        loadn r1, #1000
+    Delay_Loop1: ; while (r0 != 0)
+        loadn r1, #10
 
-        Delay_Loop2:
+        Delay_Loop2: ; while (r1 != 0)
             dec r1
         jnz Delay_Loop2
 
@@ -133,84 +148,85 @@ Delay:
 
     pop r1
     pop r0
-    pop fr
 rts
 
+; Retorna pela pilha o caractere lido
+; Para recuperar o caractere lido, use pop rX logo
+; após a chamada da função.
+; r6 - Seu conteúdo será perdido
+; r7 - Seu conteúdo será perdido
 GetChar:
-    push fr
-    push r0
-    push r1
-    push r2
+    push r5 ; 0
 
-    loadn r1, #255 ; Código enviado pelo teclado quando nenhuma tecla está pressionada
-    loadn r2, #0 ; Código enviado quando nenhuma tecla está pressionada no início da execução
+    loadn r6, #255 ; Código enviado pelo teclado quando nenhuma tecla está pressionada
+    loadn r5, #0 ; Código enviado quando nenhuma tecla está pressionada no início da execução
 
     ; Esperando apertar uma tecla
     ; Esperando enviar um código diferente de 0 e 255
-    GetChar_Loop1:
-        inchar r0 ; Recebendo caractere
-        cmp r0, r2 ; Comparando com 0
-    jeq GetChar_Loop1
-        cmp r0, r1 ; Comparando com 255
-    jeq GetChar_Loop1
-
-    store Letter, r0 ; Gravando a letra lida na memória
+    GetChar_Loop_1:
+        inchar r7 ; Recebendo caractere
+        cmp r7, r5 ; Comparando com 0
+    jeq GetChar_Loop_1
+        cmp r7, r6 ; Comparando com 255
+    jeq GetChar_Loop_1
 
     ; Esperando soltar a tecla
     ; Esperando enviar o código 255
-    GetChar_Loop2:
-        inchar r0 ; Recebendo caractere
-        cmp r0, r1 ; Comparando com 255
-    jne GetChar_Loop2
+    GetChar_Loop_2:
+        inchar r5 ; Recebendo caractere
+        cmp r5, r6 ; Comparando com 255
+    jne GetChar_Loop_2
 
-    pop r2
-    pop r1
-    pop r0
-    pop fr
+    pop r5
+
+    pop r6 ; Recuperando endereço de retorno
+    push r7 ; Empilhando caractere lido
+    push r6 ; Empilhando endereço de retorno
 rts
 
-;ScanString:
-;    push fr
-;    push r0
-;    push r1
-;    push r2
-;    push r3
-;    push r4
-;    push r5
+; Recebe uma String de no máximo 40 caracteres
+; r1 - String Address
+; r2 - Max characters
+ScanString:
+    push r0 ; Character
+    push r3 ; '\n'
+    push r4 ; i
+    push r5 ; Const Max String Size
+    push r6 ; Auxiliar
 
-;    loadn r1, #13 ; Colocando o '\n' no r1 (13 == '\n')
-;    loadn r2, #0 ; int i
-;    loadn r3, #Word ; Endereço da palavra
-;    loadn r5, #19 ; Tamanho máximo da palavra
+    loadn r3, #13 ; Colocando o '\n' no r3 (13 == '\n')
+    loadn r4, #0 ; int i
+    loadn r5, #40 ; Tamanho horizontal máximo
 
-;    ScanString_Loop:
-;        call GetChar
-;        load r0, Letter ; Carregando r0 com a letra
+    ScanString_Loop: ; while (r0 != '\n' && i != r2 && i != r5)
+        call GetChar
+        pop r0 ; Recuperando o caractere lido
 
- ;       cmp r0, r1 ; Se for enter
- ;       jeq ScanString_End
+        cmp r0, r3 ; Se for enter
+    jeq ScanString_End ; if (r0 == '\n')
 
- ;       add r4, r3, r2 ; r4 = r3 + i, tal que r4 é o endereço da string
- ;       storei r4, r0 ; String[r4] = r0
-  ;      inc r2 ; i++
-  ;      store WordSize, r2 ; Atualiza o tamanho da palavra
+        add r6, r1, r4 ; r6 = r1 + i
+        storei r6, r0 ; String[r6] = r0
 
-   ;     cmp r2, r5 ; verifica se r2 = 40
-   ;     jne ScanString_Loop
+        inc r4 ; i++
 
-   ; ScanString_End:
+        cmp r4, r2 ; Verifica se r4 == r2
+    jeq ScanString_End ; if (r0 == r2)
+        cmp r4, r5 ; Verifica se r4 == 40
+    jne ScanString_Loop
+
+    ScanString_End:
+
+    store WordSize, r4 ; Atualiza o tamanho da palavra
 
     ; Colocando o '\0'
-   ; loadn r0, #'\0' 
-   ; add r4, r3, r2
-   ; storei r4, r0
+    loadn r0, #'\0'
+    add r6, r1, r4 ; r6 = r1 + i
+    storei r6, r0 ; String[r6] = '\0'
 
-;    pop r5
-;    pop r4
-;    pop r3
-;    pop r2
-;    pop r1
-;    pop r0
-;    pop fr
-
- ;   rts
+    pop r6
+    pop r5
+    pop r4
+    pop r3
+    pop r0
+rts
