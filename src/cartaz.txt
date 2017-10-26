@@ -1,0 +1,8 @@
+como jogar
+w = cima
+a = esquerda
+s = baixo
+d = Direita
+"Space" = seta para começar a dar tiro
+
+quanto masi tempo jogando mais dificil ficae

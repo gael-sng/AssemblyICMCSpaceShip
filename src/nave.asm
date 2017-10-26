@@ -58,7 +58,7 @@ Move_Nave:
 
     nave_cima:; W vai apra cim
         ;verificar se ele nao esta no topo da tela
-        loadn r1, #40
+        loadn r1, #80
         cmp r0, r1; r0 = posição atual da nave; r1 = 40
         jle nave_default; se a posição atual da nave for menor do que 40, ignorar o movimento
         
@@ -125,9 +125,11 @@ Move_Nave:
         
     nave_default:
 
-    loadn r2, #1024; cor da nave
+    loadn r2, #3328; cor da nave
     loadn r1, #'>'
-    call PrintChar
+    add r1, r1, r2
+    ;call PrintChar
+    outchar r1, r0
     store nave_pos, r0
 
     pop r4
@@ -185,7 +187,7 @@ Tiro:
     pop r1
     pop r0
 rts
-
+;funçao que movimenta os tiros da lista
 Mov_tiros:
     push r0;
     push r1;
@@ -227,7 +229,7 @@ Mov_tiros:
             tiro_tela_borda:
             
             ; Imprimindo na tela
-            loadn r4, #'-'; Carregando o caracter do tiro
+            loadn r4, #'i'; Carregando o caracter do tiro
             add r4, r4, r7
             outchar r4, r3; Imprimindo na nova posição
 
@@ -264,7 +266,6 @@ zera_vetor:
     loadn r2, #0; contador
     loadn r3, #0; um 0 para zerar a memoria
     zera_vetor_loop:
-
         storei  r0, r3; zerando a posição da memoria
         inc r0; incrementando a posição do vetor
 
@@ -278,6 +279,7 @@ zera_vetor:
     pop r0;
 rts;
 
+;funçao que coloca um novo inimigo na lista de inimigos
 enemy_list: var #50
 cria_inimigo:
     push r0
@@ -291,17 +293,17 @@ cria_inimigo:
 
     ;gerando uam posição inicial "aleatoria"
     load r3, nave_pos; pegando a posiçao atual da nave
-    load r2, clock
-    add r3, r2, r3
-    loadn r2, #1200
-    mod r3, r3, r2
+    load r2, clock; pegando o contador do game loop
+    add r3, r2, r3; somando a posição da nave e do contador
+    loadn r2, #1160; pegando 1160
+    mod r3, r3, r2; fazendo mod por 1160 para ficar na tela
 
-    loadn r2, #40
+    loadn r2, #40; carregando 40 para fazer um mod 
 
     mod r2, r3, r2
     sub r3, r3, r2
     dec r3
-    loadn r2, #40
+    loadn r2, #80
     add r3, r2, r3
 
     ; no começo do loop tem um 'inc', esse dec é apra ele 
@@ -350,6 +352,7 @@ rand_r4:
     pop r0
 rts
 
+; funçao que faz o movimento aleatorio de tods os inimigos na lista de inimigos
 mov_enemys:
     push r0;
     push r1;
@@ -357,10 +360,12 @@ mov_enemys:
     push r3;
     push r4;
     push r5;
+    push r7;
 
     loadn r0, #enemy_list ; Lista de tiros
     loadn r1, #50; Numero maximo de tiros
     loadn r2, #0; Contador
+    load r7, nave_pos
     ; Percorre o vetor de tiros
     mov_enemy_loop:
         loadi r3, r0; pegando o conteudo do vetor para o r3
@@ -374,7 +379,10 @@ mov_enemys:
             loadn r4, #' ';
             outchar r4, r3; Colocar um espaço na posição atual do inimigo
 
-            mov r4, r3; a posição atual da nave sera usada como parametro apra o nuemro aleatorio
+            ;verificando se o inimigo esta na mesma posição que o jogador
+            cmp r7, r3; r7 = nav_pos; r3 = posição atual do inimigo
+            ceq game_over; se estiver é fim de jogo
+
             call rand_r4;sera colocado um numero de 0 a 3 "aleatoriamente" no r4 para indicar a direção em que ele ira
 
             ;switch
@@ -397,7 +405,7 @@ mov_enemys:
 
             inimigo_cima:; W vai apra cim
                 ;verificar se ele nao esta no topo da tela
-                loadn r5, #40
+                loadn r5, #80
                 cmp r3, r5; r3 = posição atual do inimigo; r5 = 40
                 jle inimigo_default; se a posição atual da nave for menor do que 40, ignorar o movimento
                 
@@ -412,7 +420,7 @@ mov_enemys:
                 mod r5, r3, r5; r1 = r0 % r1; r1 = 40; r0 =  posição atual da nave 
                 loadn r4, #0;
                 cmp r4, r5; r1 = resultado do mod; r2 = 0
-                jeq inimigo_default; Se o resultado do mod for 0 ignorar o movimento
+                jeq game_over ; Se o resultado do mod for 0, por estar na borda esquerda e tentar avançar o jogador perde o jogo
 
                 loadn r5, #1
                 sub r3, r3, r5
@@ -445,6 +453,11 @@ mov_enemys:
             loadn r4, #'<'; Carregando o caracter do tiro
             outchar r4, r3; Imprimindo na nova posição
 
+            ;verificando se o inimigo esta na mesma posição que o jogador
+            cmp r7, r3; r7 = nave_pos; r3 = nova posição do inimigo
+            ceq game_over; se estiver é fim de jogo
+
+
         enemy_zero:
         storei r0, r3; Salvando no vetor de tiros a nova posição
 
@@ -454,6 +467,7 @@ mov_enemys:
     cmp r1, r2; r2 é o contador e r1 o numero 50
     jne mov_enemy_loop; Se o contador r2 nao for 50 ele ira continuar no loop
     
+    pop r7
     pop r5;
     pop r4;
     pop r3;
@@ -462,6 +476,7 @@ mov_enemys:
     pop r0;
 rts
 
+;funçao qeu verifica a colisao entre os tiros e inimigos
 colisao:
     push r0
     push r1
@@ -542,7 +557,8 @@ find_empty_vector_position:
     pop r3
 rts
 
-tiro_list_2: var #200
+;função que posiciona um novo tiro no mapa de caracter, e numa mposinão nova
+tiro_list_2: var #300
 tiro_inimigo:
     push r0
     push r1
@@ -568,13 +584,19 @@ tiro_inimigo:
             push r1
             
             loadn r0, #tiro_list_2; r3 tera o vetor de tiros dos inimigos
-            loadn r1, #200; tamanho maximo do vetor de tiros de inimigos
-
-            call find_empty_vector_position
-
-            dec r6; decrementando a posição do inimigo salva em r6 para posicionar a frente dele(frente virada para o player a esquerda)
-            storei r0, r6 ; salvando a posição do tiro na posição do vetor
+            loadn r1, #300; tamanho maximo do vetor de tiros de inimigos
             
+            ; escolhando "aleatoriamente" se vaia tirar
+            call rand_r4
+            loadn r5, #0
+            cmp r5, r4
+            jeq no_tiro
+                call find_empty_vector_position
+
+                dec r6; decrementando a posição do inimigo salva em r6 para posicionar a frente dele(frente virada para o player a esquerda)
+
+                storei r0, r6 ; salvando a posição do tiro na posição do vetor
+            no_tiro:
             pop r1
             pop r0 
         posicao_vazia:
@@ -593,6 +615,7 @@ tiro_inimigo:
     pop r0
 rts
 
+;funçao que faz o movimento de todos os tiros dos inimigos e checa a colisao com o player 
 mov_tiro_inimigo:
     push r0;
     push r1;
@@ -604,7 +627,7 @@ mov_tiro_inimigo:
     push r7;
 
     loadn r0, #tiro_list_2 ; Lista de tiros
-    loadn r1, #200; Numero maximo de tiros
+    loadn r1, #300; Numero maximo de tiros
     loadn r2, #0; Contador
     load r7, nave_pos; pegando a posição da nave para ver se ela foi acertada
     loadn r6, #2816 ;cor do tiro amarelo
@@ -642,7 +665,7 @@ mov_tiro_inimigo:
             tiro_tela_borda_2:
             
             ; Imprimindo na tela
-            loadn r4, #'-'; Carregando o caracter do tiro
+            loadn r4, #'k'; Carregando o caracter do tiro
             add r4, r4, r6; colocando a cor amarela no tiro
             outchar r4, r3; Imprimindo na nova posição
 
@@ -665,7 +688,7 @@ mov_tiro_inimigo:
     pop r0;
 rts
 
-
+;funçao que printa a tela de game over e espera o jogador pertar espaço
 game_over:
     call EraseScreen
     loadn r0, #600
@@ -687,6 +710,103 @@ game_over:
     jmp main
 rts
 
+;funçao que aumenta a quantidade de inimigos expawnados, e a velocidade do tiro deles, e faz um eventoa leatorio
+;que pode ser uma tela de miceis inimigos pintada, ou a distruição de todos os inimigos e tiros atualmente na tela(enos o jogaodr) 
+get_harder:
+    push r7
+    
+    loadn r7, #20
+    sub r3, r3, r7; aumentando a frequencia de spawn
+    
+    loadn r7, #2
+    sub r4, r4, r7; aumentando a frequencia em que os tiros do inimigo se movem
+    
+    push r0
+    push r1
+    push r2
+    push r3
+    push r4
+
+    loadn r0, #1; imprimir na posição 1
+    loadn r1, #Harder; string de aviso que esta ficando dificil
+    loadn r2, #2304; cor vermelha
+    loadn r3, #'@'; ignorar o espaço
+    call PrintString
+
+
+    call rand_r4
+
+    ;switch
+    loadn r1, #0
+    cmp r1, r4
+    jeq illusion
+
+    loadn r1, #1
+    cmp r1, r4
+    jeq annihilation
+
+    loadn r1, #2
+    cmp r1, r4
+    jeq more_harder
+    
+    loadn r1, #3
+    cmp r1, r4
+    jmp event_default
+
+    illusion:
+        loadn r0, #'k'; missel do inimigo
+        loadn r1, #2816
+        add r0, r0, r1; pintando so missesi de amarelo
+        loadn r1, #40; contador + posição da tela
+        loadn r2, #1199; limite da tela par imprimir
+
+        illusion_loop:
+            outchar r0, r1; pritnaod o missel inimigo na tela
+            inc r1; incrementando a posição da tela
+            cmp r1, r2; comparando a posiçao com 1199, se for igual é para sair do loop para nao printar fora da tela
+        jne illusion_loop
+        jmp event_default
+
+
+    annihilation:
+        
+        loadn r0, #1; imprimir na posição 1
+        loadn r1, #Harder; string de aviso que esta ficando dificil
+        loadn r2, #2304; cor vermelha
+        loadn r3, #'@'; ignorar o espaço
+        call PrintString
+        call EraseScreen;
+
+        loadn r0, #tiro_list; endereço do vetor de tiro na posiçãp 0
+        loadn r1, #50; numero maximo de tiros
+        call zera_vetor;
+
+        loadn r0, #enemy_list; endereço do vetor de inimigos na posiçãp 0
+        loadn r1, #50; numero maximo de inimigos
+        call zera_vetor;
+
+        loadn r0, #tiro_list_2; lista de tiros dos inimigos
+        loadn r1, #300
+        call zera_vetor;
+        jmp event_default
+
+    more_harder:
+    
+        jmp event_default
+    event_default:
+
+
+
+
+    pop r4
+    pop r3
+    pop r2
+    pop r1
+    pop r0
+
+    pop r7
+rts
+
 clock: var #1
 main:
     call EraseScreen;
@@ -696,17 +816,19 @@ main:
     call zera_vetor;
 
     loadn r0, #enemy_list; endereço do vetor de inimigos na posiçãp 0
-    loadn r1, #50; numero maximo de tiros
+    loadn r1, #50; numero maximo de inimigos
     call zera_vetor;
 
-    loadn r0, #tiro_list_2
-    loadn r1, #200
+    loadn r0, #tiro_list_2; lista de tiros dos inimigos
+    loadn r1, #300
     call zera_vetor;
 
     loadn r0, #401; contador do jogo e a posição inicial da nave
     store nave_pos, r0; colocando a posição inicial da nave em 400
     loadn r2, #0; para comparar com os resultados dos mods
 
+    loadn r3, #100; registrador que ira guardar a frequencia de spawn de inimigo
+    loadn r4, #20; frequencia em, que o tiro do inimigo se move
     Game_Loop:
         
         loadn r1, #10; carrega o r1 com 10
@@ -724,8 +846,7 @@ main:
         cmp r1, r2;
         ceq Mov_tiros;
     
-        loadn r1, #80;
-        mod r1, r0, r1;
+        mod r1, r0, r3; r3 guarda a freqeucnia de spaw dos inimigos
         cmp r1, r2;
         ceq cria_inimigo;
 
@@ -735,14 +856,18 @@ main:
         ceq mov_enemys;
        
         loadn r1, #200;
-        mod r1, r0, r1;
+        mod r1, r0, r1; 
         cmp r1, r2;
         ceq tiro_inimigo
 
-        loadn r1, #20;
-        mod r1, r0, r1;
+        mod r1, r0, r4; a freqeuncia em que o tiro do inimigo se move esta guardada em r4
         cmp r1, r2;
         ceq mov_tiro_inimigo
+
+        loadn r1, #4000; a cada 20 tiros do inimigo aumenta a dificuldade
+        mod r1, r0, r1;
+        cmp r1, r2;
+        ceq get_harder
 
         call Delay;
         inc r0;

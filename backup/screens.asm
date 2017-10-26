@@ -24,7 +24,7 @@ Game_16: string "                                        " ; 640
 Game_17: string "                                        " ; 680
 Game_18: string "                                        " ; 720
 Game_19: string "                                        " ; 760
-Game_20: string "      press 'SPACE' to start again      " ; 800
+Game_20: string "      press 'SPACE' to restart          " ; 800
 Game_21: string "                                        " ; 840
 Game_22: string "                                        " ; 880
 Game_23: string "                                        " ; 920

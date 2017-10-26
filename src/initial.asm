@@ -40,5 +40,7 @@ static rand_vector + #27, #2 ;
 static rand_vector + #28, #2 ;
 static rand_vector + #29, #1 ;
 ; Mensagens para o usuário
-TypeInAWord: string "Escreva uma palavra e pressione ENTER:"
+Harder: string "Is getting harder"
+Curse: string "You have been cursed"
+Annihilation_string: string "Annihilation!!"
 
